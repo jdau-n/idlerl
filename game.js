@@ -8,7 +8,14 @@ var Control = {
 	up: false,
 	down: false,
 	left: false,
-	right: false
+	right: false,
+
+	clear: function() {
+		this.up=false;
+		this.down=false;
+		this.left=false;
+		this.right=false;
+	}
 }
 
 var Player = {
@@ -25,8 +32,8 @@ var Game = {
 	mapWidth: 150,
 	mapHeight: 80,
 
-	screenWidth: 30,
-	screenHeight: 20,
+	screenWidth: 40,
+	screenHeight: 30,
 
     mapDisplay: null,
     playerDisplay: null,
@@ -34,18 +41,36 @@ var Game = {
     mapData: [],
 
     player: null,
+    pScreenRedraw: false,
+    pScrDirtyQueue: [],
+
+    mScreenRedraw: false,
+    mScrDirtyQueue: [],
  
     init: function() {
         this.mapDisplay = new ROT.Display({width:this.mapWidth, height:this.mapHeight, fontSize:6});
         this.playerDisplay = new ROT.Display({width:this.screenWidth, height:this.screenHeight, fontSize:14});
-        document.body.appendChild(this.mapDisplay.getContainer());
-        document.body.appendChild(this.playerDisplay.getContainer());
+        $("#map_screen").append(this.mapDisplay.getContainer());
+        $("#game_screen").append(this.playerDisplay.getContainer());
+
+        $("#focus_input").keypress(function(event) {
+        	if (event.key=="w") {
+        		Control.up = true;
+        	} else if (event.key=="a") {
+        		Control.left = true;
+        	} else if (event.key=="s") {
+        		Control.down = true;
+        	} else if (event.key=="d") {
+        		Control.right = true;
+        	}
+        	$("#focus_input").val("");
+        });
 
         this.generateMap();
-        this.redrawMap();
 
         this.initPlayer();
 
+        this.redrawMap();
         this.drawPlayerScreen();
     },
 
@@ -81,7 +106,7 @@ var Game = {
     	for (var i=0; i<5; i++) map.create();
 
     	map.create(function(x,y,wall) {
-    		Game.mapData[x][y]=wall;
+    		if (wall) { Game.mapData[x][y]=1; }
     	});
 
     	// pass 2: trees
@@ -103,9 +128,7 @@ var Game = {
     	map.create();
 
     	map.create(function(x,y,wall) {
-    		if (wall) {
-    			Game.mapData[x][y]=3;
-    		}
+    		if (wall) { Game.mapData[x][y]=3; }
     	});
 
     },
@@ -134,33 +157,78 @@ var Game = {
     	var playerRelX = this.player.x - screenTopX;
     	var playerRelY = this.player.y - screenTopY;
     	this.playerDisplay.draw(playerRelX, playerRelY, "@", "#fff", "#000");
-    	this.mapDisplay.draw(this.player.x, this.player.y, "@", "#fff", "#f00");
+    },
+
+    drawPlayerTile: function(x,y) {
+
     },
 
     redrawMap: function() {
     	for (var x = 0; x < this.mapWidth; x++) {
     		for (var y = 0; y < this.mapHeight; y++) {
-    			
-    			if (this.mapData[x][y] == 0) {
-    				this.mapDisplay.draw(x,y,".", "#63c64d", "#000");
-    			} else if (this.mapData[x][y] == 1) {
-    				this.mapDisplay.draw(x,y,"#", "#ffffff", "#afbfd2");
-    			} else if (this.mapData[x][y] == 2) {
-    				this.mapDisplay.draw(x,y,"^", "#327345", "#63c64d");
-    			} else if (this.mapData[x][y] == 3) {
-    				this.mapDisplay.draw(x,y,":", "#ffffff", "#743f39");
-    			}
+    			this.redrawMapTile(x,y);
     		}
-    	}	
+    	}
+
+    	this.redrawMapPlayer();
     },
 
-    handleInput: function() {
-
+    redrawMapTile: function(x,y) {
+    	if (this.mapData[x][y] == 0) {
+			this.mapDisplay.draw(x,y,".", "#63c64d", "#000");
+		} else if (this.mapData[x][y] == 1) {
+			this.mapDisplay.draw(x,y,"#", "#ffffff", "#afbfd2");
+		} else if (this.mapData[x][y] == 2) {
+			this.mapDisplay.draw(x,y,"^", "#327345", "#63c64d");
+		} else if (this.mapData[x][y] == 3) {
+			this.mapDisplay.draw(x,y,":", "#ffffff", "#743f39");
+		}
     },
 
-    gameloop: function() {
+    redrawMapPlayer: function() {
+    	this.mapDisplay.draw(this.player.x, this.player.y, "@", "#fff", "#f00");
+    },
+
+    playerMove: function(x,y) {
+    	if (this.mapData[this.player.x + x][this.player.y + y]==0) {
+    		this.mScrDirtyQueue.push([this.player.x,this.player.y]);
+
+    		this.player.x += x;
+    		this.player.y += y;
+    	}
+    	this.pScreenRedraw = true;
+    },
+
+    tick: function() {
+    	if (Control.up) {
+    		this.playerMove(0,-1);
+    	} else if (Control.left) {
+    		this.playerMove(-1,0);
+    	} else if (Control.down) {
+    		this.playerMove(0,1);
+    	} else if (Control.right) {
+    		this.playerMove(1,0);
+    	}
+    	Control.clear();
+
+    	if (this.pScreenRedraw) {
+    		this.drawPlayerScreen();
+    		this.pScreenRedraw=false;
+    	}
+
+    	if (this.mScrDirtyQueue.length) {
+    		for (var i = this.mScrDirtyQueue.length - 1; i >= 0; i--) {
+    			this.redrawMapTile(this.mScrDirtyQueue[i][0],this.mScrDirtyQueue[i][1]);
+    		}
+    		this.redrawMapPlayer();
+    		this.mScrDirtyQueue=[];
+    	}
 
     }
 }
 
 Game.init();
+
+setInterval(function() {
+	Game.tick();
+}, 100);
