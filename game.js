@@ -50,6 +50,8 @@ var Game = {
 	mScrDirtyQueue: [],
 
 	chunkManager: null,
+
+	cycle: 0,
  
 	init: function() {
 		this.mapDisplay = new ROT.Display({width:this.mapWidth, height:this.mapHeight, fontSize:6});
@@ -103,8 +105,6 @@ var Game = {
 				var mapX = x + screenTopX - this.chunkManager.globalXoffset();
 				var mapY = y + screenTopY - this.chunkManager.globalYoffset();
 
-				var tile = -1;
-
 				var chunkX = 1;
 				var chunkY = 1;
 
@@ -127,10 +127,14 @@ var Game = {
 
 				//console.log(chunkX,chunkY,mapX,mapY);
 
-				tile = this.chunkManager.mapGrid[chunkX][chunkY].mapData[mapX][mapY];
+				var tile = this.chunkManager.mapGrid[chunkX][chunkY].mapData[mapX][mapY];
 
 				if (tile == 0) {
-					this.playerDisplay.draw(x,y,".", Palette.green, Palette.black);
+					if (mapX == this.chunkManager.chunkWidth-1 || mapY == this.chunkManager.chunkHeight-1) {
+						this.playerDisplay.draw(x,y,".", Palette.green, Palette.yellow);
+					} else {
+						this.playerDisplay.draw(x,y,".", Palette.green, Palette.black);
+					}
 				} else if (tile == 1) {
 					this.playerDisplay.draw(x,y,"#", Palette.white, Palette.grey);
 				} else if (tile == 2) {
@@ -140,6 +144,26 @@ var Game = {
 				}
 			}
 		}
+
+		for (var x = 0; x < 3; x++) {
+    		for (var y = 0; y < 3; y++) {
+    			for (var i = this.chunkManager.mapGrid[x][y].entities.length - 1; i >= 0; i--) {
+    				var eX = this.chunkManager.mapGrid[x][y].entities[i].x;
+    				var eY = this.chunkManager.mapGrid[x][y].entities[i].y;
+
+					if (eX > screenTopX && eX < screenTopX + this.screenWidth && eY > screenTopY && eY < screenTopY + this.screenHeight) {
+						//console.log('Draw',this.chunkManager.mapGrid[x][y].entities[i].name);
+    					this.playerDisplay.draw(
+    							eX - screenTopX,
+    							eY - screenTopY,
+    							this.chunkManager.mapGrid[x][y].entities[i].tile,
+    							this.chunkManager.mapGrid[x][y].entities[i].color,
+    							Palette.black		
+    						);
+    				}
+    			}
+    		}
+    	}
 
 		var playerRelX = (this.player.x) - screenTopX;
 		var playerRelY = (this.player.y) - screenTopY;
@@ -196,9 +220,14 @@ var Game = {
 		return this.chunkManager.mapGrid[locData[0]][locData[1]].mapData[locData[2]][locData[3]];
 	},
 
+	isValidMove: function(x,y) {
+		if (this.getWorldspaceTile(x,y)==0) { return 1; }
+		return 0;
+	},
+
 	playerMove: function(x,y) {
 		var pre_move = this.globalToChunk(this.player.x,this.player.y);
-		if (this.getWorldspaceTile(this.player.x + x,this.player.y + y)==0) {
+		if (this.isValidMove(this.player.x + x,this.player.y + y)) {
 			//this.mScrDirtyQueue.push([this.player.x,this.player.y]);
 
 			this.player.x += x;
@@ -227,6 +256,27 @@ var Game = {
 		}
 	},
 
+	tickEntities: function() {
+		for (var x = 0; x < 3; x++) {
+    		for (var y = 0; y < 3; y++) {
+    			for (var i = this.chunkManager.mapGrid[x][y].entities.length - 1; i >= 0; i--) {
+    				var entity = this.chunkManager.mapGrid[x][y].entities[i];
+    				entity.tick(this.cycle);
+
+    				if (null != entity.move) {
+    					
+    					if (this.isValidMove(entity.x + entity.move[0], entity.y + entity.move[1])) {
+    						//console.log("move request approved", entity.move, entity.x, entity.y);
+    						entity.x += entity.move[0];
+    						entity.y += entity.move[1];
+    					}
+    				}
+    				//this.chunkManager.mapGrid[x][y].entities[i] = entity;
+    			}
+    		}
+    	}
+	},
+
 	tick: function() {
 		var t0 = performance.now();
 
@@ -240,6 +290,9 @@ var Game = {
 			this.playerMove(1,0);
 		}
 		Control.clear();
+
+		this.tickEntities();
+		this.cycle++;
 
 		if (this.pScreenRedraw) {
 			this.drawPlayerScreen();

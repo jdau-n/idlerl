@@ -19,18 +19,18 @@ var ChunkManager = {
 
 	start: function(startX,startY) {
 		localStorage.clear();
+    	this.currentCentreX = startX;
+    	this.currentCentreY = startY;
 
+    	this.entityMaker = EntityMaker;
+    	this.entityMaker.load();
 		for (var x = 0; x < 3; x++) {
     		for (var y = 0; y < 3; y++) {
     			if (this.mapGrid[x] == undefined) { this.mapGrid[x] = []; }
     			this.mapGrid[x][y]=this.loadChunk(startX-1+x,startY-1+y);
     		}
     	}
-    	this.currentCentreX = startX;
-    	this.currentCentreY = startY;
 
-    	this.entityMaker = EntityMaker;
-    	this.entityMaker.load();
 	},
 
 	shiftGrid: function(direction) { // never eat soggy weetbix
@@ -196,10 +196,29 @@ var ChunkManager = {
     		if (wall) { mapData[x][y]=3; }
     	});
 
+    	var entities=[];
+
+    	for (var i=0; i<3; i++) {
+    		var x = Util.rint(0,this.chunkHeight-1);
+			var y = Util.rint(0,this.chunkWidth-1);
+			if (mapData[x][y]==0) {
+				entities.push(this.entityMaker.create("Mushroom",x+(chunkX*this.chunkWidth),y+(chunkY*this.chunkHeight)));
+			}
+    	}
+
+    	for (var i=0; i<3; i++) {
+    		var x = Util.rint(0,this.chunkHeight-1);
+			var y = Util.rint(0,this.chunkWidth-1);
+			if (mapData[x][y]==0) {
+				entities.push(this.entityMaker.create("Goblin",x+(chunkX*this.chunkWidth),y+(chunkY*this.chunkHeight)));
+			}
+    	}
+
     	var retChunk = Object.assign({}, Chunk);
     	retChunk.mapData = mapData;
     	retChunk.locationX = chunkX;
     	retChunk.locationY = chunkY;
+    	retChunk.entities = entities;
     	return retChunk;
 	}
 
