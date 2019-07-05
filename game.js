@@ -95,8 +95,8 @@ var Game = {
     },
 
     drawPlayerScreen: function() {
-    	var screenTopX = (this.player.x) -  Math.floor(this.screenWidth/2);
-    	var screenTopY = (this.player.y) - Math.floor(this.screenHeight/2);
+    	var screenTopX = this.player.x -  Math.floor(this.screenWidth/2);
+    	var screenTopY = this.player.y - Math.floor(this.screenHeight/2);
 
 		for (var x = 0; x < this.screenWidth; x++) {
     		for (var y = 0; y < this.screenHeight; y++) {
@@ -124,6 +124,8 @@ var Game = {
     				chunkX--;
     				mapX = this.chunkManager.chunkWidth + (mapX);
     			}
+
+    			//console.log(chunkX,chunkY,mapX,mapY);
 
    				tile = this.chunkManager.mapGrid[chunkX][chunkY].mapData[mapX][mapY];
 
@@ -210,19 +212,21 @@ var Game = {
 
     		var post_move = this.globalToChunk(this.player.x,this.player.y);
 
-    		if (pre_move[0] != post_move[1] || pre_move[0] != post_move[1]) { // if the player chunk has changed..
+    		if (pre_move[0] != post_move[0] || pre_move[1] != post_move[1]) { // if the player chunk has changed..
     			if (pre_move[0] > post_move[0]) {
-    				// west
+    				this.chunkManager.shiftGrid(4);
+    				console.log('grid shift west to ' + this.chunkManager.currentCentreX + ', ' + this.chunkManager.currentCentreY);
     			} else if (pre_move[0] < post_move[0]) {
-    				// east
+    				this.chunkManager.shiftGrid(2);
+    				console.log('grid shift east to ' + this.chunkManager.currentCentreX + ', ' + this.chunkManager.currentCentreY);
     			}
 
 				if (pre_move[1] > post_move[1]) {
-    				// north
     				this.chunkManager.shiftGrid(1);
-    				console.log('grid shift north');
+    				console.log('grid shift north to ' + this.chunkManager.currentCentreX + ', ' + this.chunkManager.currentCentreY);
     			} else if (pre_move[1] < post_move[1]) {
-    				// south
+    				this.chunkManager.shiftGrid(3);
+    				console.log('grid shift south to ' + this.chunkManager.currentCentreX + ', ' + this.chunkManager.currentCentreY);
     			}    			
     		}
     	}

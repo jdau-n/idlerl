@@ -15,6 +15,8 @@ var ChunkManager = {
 	currentCentreY: 0,
 
 	start: function(startX,startY) {
+		localStorage.clear();
+
 		for (var x = 0; x < 3; x++) {
     		for (var y = 0; y < 3; y++) {
     			if (this.mapGrid[x] == undefined) { this.mapGrid[x] = []; }
@@ -30,17 +32,76 @@ var ChunkManager = {
 
 		if (direction == 1) {
 			this.currentCentreY -= 1;
-			newMapGrid[0,0] = this.mapGrid[0,1];
-			newMapGrid[1,0] = this.mapGrid[1,1];
-			newMapGrid[2,0] = this.mapGrid[2,1];
+			newMapGrid[0][0] = this.loadChunk(this.currentCentreX - 1, this.currentCentreY - 1);
+			newMapGrid[1][0] = this.loadChunk(this.currentCentreX, this.currentCentreY - 1);
+			newMapGrid[2][0] = this.loadChunk(this.currentCentreX + 1, this.currentCentreY - 1);
 
-			newMapGrid[0,1] = this.mapGrid[0,2];
-			newMapGrid[1,1] = this.mapGrid[1,2];
-			newMapGrid[2,1] = this.mapGrid[2,2];
+			newMapGrid[0][1] = this.mapGrid[0][0];
+			newMapGrid[1][1] = this.mapGrid[1][0];
+			newMapGrid[2][1] = this.mapGrid[2][0];
 
-			newMapGrid[0,2] = this.loadChunk(this.currentCentreX - 1, this.currentCentreY + 1);
-			newMapGrid[1,2] = this.loadChunk(this.currentCentreX, this.currentCentreY + 1);
-			newMapGrid[2,2] = this.loadChunk(this.currentCentreX + 1, this.currentCentreY + 1);
+			newMapGrid[0][2] = this.mapGrid[0][1];
+			newMapGrid[1][2] = this.mapGrid[1][1];
+			newMapGrid[2][2] = this.mapGrid[2][1];
+
+			// Unload southmost chunks
+			this.unloadChunk(0,2);
+			this.unloadChunk(1,2);
+			this.unloadChunk(2,2);
+
+		} else if (direction == 2) {
+			this.currentCentreX += 1;
+			newMapGrid[0][0] = this.mapGrid[1][0];
+			newMapGrid[0][1] = this.mapGrid[1][1];
+			newMapGrid[0][2] = this.mapGrid[1][2];
+
+			newMapGrid[1][0] = this.mapGrid[2][0];
+			newMapGrid[1][1] = this.mapGrid[2][1];
+			newMapGrid[1][2] = this.mapGrid[2][2];
+
+			newMapGrid[2][0] = this.loadChunk(this.currentCentreX + 1, this.currentCentreY - 1);
+			newMapGrid[2][1] = this.loadChunk(this.currentCentreX + 1, this.currentCentreY);
+			newMapGrid[2][2] = this.loadChunk(this.currentCentreX + 1, this.currentCentreY + 1);
+
+			this.unloadChunk(0,0);
+			this.unloadChunk(0,1);
+			this.unloadChunk(0,2);
+			
+		} else if (direction == 3) {
+			this.currentCentreY += 1;
+			newMapGrid[0][0] = this.mapGrid[0][1];
+			newMapGrid[1][0] = this.mapGrid[1][1];
+			newMapGrid[2][0] = this.mapGrid[2][1];
+
+			newMapGrid[0][1] = this.mapGrid[0][2];
+			newMapGrid[1][1] = this.mapGrid[1][2];
+			newMapGrid[2][1] = this.mapGrid[2][2];
+
+			newMapGrid[0][2] = this.loadChunk(this.currentCentreX - 1, this.currentCentreY + 1);
+			newMapGrid[1][2] = this.loadChunk(this.currentCentreX, this.currentCentreY + 1);
+			newMapGrid[2][2] = this.loadChunk(this.currentCentreX + 1, this.currentCentreY + 1);
+
+			this.unloadChunk(0,0);
+			this.unloadChunk(1,0);
+			this.unloadChunk(2,0);
+
+		} else if (direction == 4) {
+			this.currentCentreX -= 1;
+			newMapGrid[0][0] = this.loadChunk(this.currentCentreX - 1, this.currentCentreY - 1);
+			newMapGrid[0][1] = this.loadChunk(this.currentCentreX - 1, this.currentCentreY);
+			newMapGrid[0][2] = this.loadChunk(this.currentCentreX - 1, this.currentCentreY + 1);
+
+			newMapGrid[1][0] = this.mapGrid[0][0];
+			newMapGrid[1][1] = this.mapGrid[0][1];
+			newMapGrid[1][2] = this.mapGrid[0][2];
+
+			newMapGrid[2][0] = this.mapGrid[1][0];
+			newMapGrid[2][1] = this.mapGrid[1][1];
+			newMapGrid[2][2] = this.mapGrid[1][2];
+
+			this.unloadChunk(2,0);
+			this.unloadChunk(2,1);
+			this.unloadChunk(2,2);
 		}
 
 		this.mapGrid = newMapGrid;
@@ -61,15 +122,23 @@ var ChunkManager = {
 
 	loadChunk: function(x,y) {
 		var level_data = localStorage.getItem(x.toString() + "-" + y.toString());
+		//var level_data = null;
 		if (null == level_data) {
 			level_data = this.generateChunk(x,y);
+			console.log("new chunk gen");
+		} else {
+			level_data = JSON.parse(level_data);
+			console.log("chunk loaded from ls", level_data);
 		}
 
 		return level_data;
 	},
 
 	unloadChunk: function(x,y) {
-
+		var globX = this.mapGrid[x][y].locationX;
+		var globY = this.mapGrid[x][y].locationY;
+		console.log(globX.toString() + "-" + globY.toString(), this.mapGrid[x][y]);
+		localStorage.setItem(globX.toString() + "-" + globY.toString(), JSON.stringify(this.mapGrid[x][y]));
 	},
 
 	generateBlankMap(w,h) {
