@@ -1,7 +1,8 @@
 var Chunk = {
 	mapData: [],
 	xLocation: 0,
-	yLocation: 0
+	yLocation: 0,
+	entities: []
 }
 
 var ChunkManager = {
@@ -14,6 +15,8 @@ var ChunkManager = {
 	currentCentreX: 0,
 	currentCentreY: 0,
 
+	entityMaker: null,
+
 	start: function(startX,startY) {
 		localStorage.clear();
 
@@ -25,6 +28,9 @@ var ChunkManager = {
     	}
     	this.currentCentreX = startX;
     	this.currentCentreY = startY;
+
+    	this.entityMaker = EntityMaker;
+    	this.entityMaker.load();
 	},
 
 	shiftGrid: function(direction) { // never eat soggy weetbix

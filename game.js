@@ -130,13 +130,13 @@ var Game = {
    				tile = this.chunkManager.mapGrid[chunkX][chunkY].mapData[mapX][mapY];
 
    				if (tile == 0) {
-					this.playerDisplay.draw(x,y,".", "#63c64d", "#000");
+					this.playerDisplay.draw(x,y,".", Palette.green, Palette.black);
 				} else if (tile == 1) {
-					this.playerDisplay.draw(x,y,"#", "#ffffff", "#afbfd2");
+					this.playerDisplay.draw(x,y,"#", Palette.grey, Palette.brown);
 				} else if (tile == 2) {
-					this.playerDisplay.draw(x,y,"^", "#327345", "#63c64d");
+					this.playerDisplay.draw(x,y,"^", Palette.lightGreen, Palette.darkBrown);
 				} else if (tile == 3) {
-					this.playerDisplay.draw(x,y,":", "#ffffff", "#743f39");
+					this.playerDisplay.draw(x,y,":", Palette.lightYellow, Palette.lightBrown);
 				}
     		}
     	}
@@ -192,13 +192,8 @@ var Game = {
     getWorldspaceTile: function(x,y) {
     	var locData = this.globalToChunk(x,y);
 
-    	var chunkX = locData[0];
-    	var chunkY = locData[1];
-    	var localX = locData[2];
-    	var localY = locData[3];
     	if (!this.chunkManager.isLoaded(locData[4],locData[5])) { return -1; }
-
-    	return this.chunkManager.mapGrid[chunkX][chunkY].mapData[localX][localY];
+    	return this.chunkManager.mapGrid[locData[0]][locData[1]].mapData[locData[2]][locData[3]];
     },
 
     playerMove: function(x,y) {
