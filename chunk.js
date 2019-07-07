@@ -17,6 +17,8 @@ var ChunkManager = {
 
 	entityMaker: null,
 
+	pendingChunks: [],
+
 	start: function(startX,startY) {
 		localStorage.clear();
     	this.currentCentreX = startX;
@@ -27,7 +29,7 @@ var ChunkManager = {
 		for (var x = 0; x < 3; x++) {
     		for (var y = 0; y < 3; y++) {
     			if (this.mapGrid[x] == undefined) { this.mapGrid[x] = []; }
-    			this.mapGrid[x][y]=this.loadChunk(startX-1+x,startY-1+y);
+    			this.loadChunk(startX-1+x,startY-1+y);
     		}
     	}
 
@@ -126,25 +128,34 @@ var ChunkManager = {
 		return (this.chunkHeight * this.currentCentreY);
 	},
 
+	catchChunk: function(err, value) {
+		console.log(err,value);
+	},
+
 	loadChunk: function(x,y) {
-		var level_data = localStorage.getItem(x.toString() + "-" + y.toString());
-		//var level_data = null;
+		var chunkID = x.toString() + "-" + y.toString();
+		Game.setLoading("chunk");
+		this.pendingChunks.push(chunkID);
+		localforage.getItem(chunkID,this.catchChunk);
+		
+
+		/*
 		if (null == level_data) {
 			level_data = this.generateChunk(x,y);
 			console.log("new chunk gen");
 		} else {
-			level_data = JSON.parse(level_data);
 			console.log("chunk loaded from ls", level_data);
 		}
 
 		return level_data;
+		*/
 	},
 
 	unloadChunk: function(x,y) {
 		var globX = this.mapGrid[x][y].locationX;
 		var globY = this.mapGrid[x][y].locationY;
 		console.log(globX.toString() + "-" + globY.toString(), this.mapGrid[x][y]);
-		localStorage.setItem(globX.toString() + "-" + globY.toString(), JSON.stringify(this.mapGrid[x][y]));
+		Database.setItem(globX.toString() + "-" + globY.toString(), this.mapGrid[x][y]);
 	},
 
 	generateBlankMap(w,h) {

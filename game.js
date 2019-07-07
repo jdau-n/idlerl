@@ -52,6 +52,7 @@ var Game = {
 	chunkManager: null,
 
 	cycle: 0,
+	loading: false,
  
 	init: function() {
 		this.mapDisplay = new ROT.Display({width:this.mapWidth, height:this.mapHeight, fontSize:6});
@@ -277,7 +278,19 @@ var Game = {
     	}
 	},
 
+	setLoading: function(desc) {
+		this.loading = true;
+		this.pScreenRedraw = true;
+		this.playerDisplay.drawText(5,  2, "Loading: "+desc);
+	},
+
+	doneLoading: function() {
+		this.loading = false;
+	},
+
 	tick: function() {
+		if (this.loading) { return; }
+
 		var t0 = performance.now();
 
 		if (Control.up) {

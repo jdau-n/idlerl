@@ -1,3 +1,5 @@
+// https://lospec.com/palette-list/aap-16
+
 var Palette = {
 	black: '#070708',
 	darkBrown: '#332222',
